@@ -1,17 +1,18 @@
 package plc.project;
 
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * The lexer works through three main functions:
- *
- *  - {@link #lex()}, which repeatedly calls lexToken() and skips whitespace
- *  - {@link #lexToken()}, which lexes the next token
- *  - {@link CharStream}, which manages the state of the lexer and literals
- *
+ * <p>
+ * - {@link #lex()}, which repeatedly calls lexToken() and skips whitespace
+ * - {@link #lexToken()}, which lexes the next token
+ * - {@link CharStream}, which manages the state of the lexer and literals
+ * <p>
  * If the lexer fails to parse something (such as an unterminated string) you
  * should throw a {@link ParseException} with an index at the invalid character.
- *
+ * <p>
  * The {@link #peek(String...)} and {@link #match(String...)} functions are
  * helpers you need to use, they will make the implementation easier.
  */
@@ -28,19 +29,37 @@ public final class Lexer {
      * whitespace where appropriate.
      */
     public List<Token> lex() {
-        throw new UnsupportedOperationException(); //TODO
+        List<Token> tokens = new ArrayList<>();
+        while (chars.has(0)) {
+            if (Character.isWhitespace(chars.get(0))) {
+                chars.advance();
+            } else {
+                tokens.add(lexToken());
+            }
+        }
+        return tokens;
     }
 
     /**
      * This method determines the type of the next token, delegating to the
      * appropriate lex method. As such, it is best for this method to not change
      * the state of the char stream (thus, use peek not match).
-     *
+     * <p>
      * The next character should start a valid token since whitespace is handled
      * by {@link #lex()}
      */
     public Token lexToken() {
-        throw new UnsupportedOperationException(); //TODO
+        if (peek("[a-zA-Z_]")) {
+            return lexIdentifier();
+        } else if (peek("[0-9]")) {
+            return lexNumber();
+        } else if (match("'")) {
+            return lexCharacter();
+        } else if (match("\"")) {
+            return lexString();
+        } else {
+            return lexOperator();
+        }
     }
 
     public Token lexIdentifier() {
@@ -82,13 +101,14 @@ public final class Lexer {
      * true. Hint - it's easiest to have this method simply call peek.
      */
     public boolean match(String... patterns) {
+
         throw new UnsupportedOperationException(); //TODO (in Lecture)
     }
 
     /**
      * A helper class maintaining the input string, current index of the char
      * stream, and the current length of the token being matched.
-     *
+     * <p>
      * You should rely on peek/match for state management in nearly all cases.
      * The only field you need to access is {@link #index} for any {@link
      * ParseException} which is thrown.
