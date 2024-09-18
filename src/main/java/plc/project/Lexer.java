@@ -71,7 +71,22 @@ public final class Lexer {
     }
 
     public Token lexCharacter() {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("[^'\\\\]")) {
+            if (match("'")) {
+                return chars.emit(Token.Type.CHARACTER);
+            } else if (match("\\\\")) {
+                lexEscape();
+                if (match("'")) {
+                    return chars.emit(Token.Type.CHARACTER);
+                } else {
+                    throw new ParseException("Invalid Escape", chars.index);
+                }
+            } else {
+                throw new ParseException("Unterminated", chars.index);
+            }
+        } else {
+            throw new ParseException("Unterminated", chars.index);
+        }
     }
 
     public Token lexString() {
