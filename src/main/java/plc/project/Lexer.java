@@ -63,7 +63,13 @@ public final class Lexer {
     }
 
     public Token lexIdentifier() {
-        throw new UnsupportedOperationException(); //TODO
+        if (!match("[a-zA-Z_]")) {
+            throw new ParseException("Invalid identifier start", chars.index);
+        }
+        while (chars.has(0) && match("[a-zA-Z0-9_-]")) {
+            // No need to call advance here, match already advances the stream
+        }
+        return chars.emit(Token.Type.IDENTIFIER);
     }
 
     public Token lexNumber() {
@@ -71,19 +77,56 @@ public final class Lexer {
     }
 
     public Token lexCharacter() {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("[^'\\\\]")) {
+            if (match("'")) {
+                return chars.emit(Token.Type.CHARACTER);
+            } else if (match("\\\\")) {
+                lexEscape();
+                if (match("'")) {
+                    return chars.emit(Token.Type.CHARACTER);
+                } else {
+                    throw new ParseException("Invalid Escape", chars.index);
+                }
+            } else {
+                throw new ParseException("Unterminated", chars.index);
+            }
+        } else {
+            throw new ParseException("Unterminated", chars.index);
+        }
     }
 
     public Token lexString() {
-        throw new UnsupportedOperationException(); //TODO
+        while (chars.has(0) && !peek("\"")) {
+            if (match("\\\\")) {
+                lexEscape();
+            } else if (match("[^\"\n\r\\\\]")) {
+                // No need to call advance here, match already advances the stream
+            } else {
+                throw new ParseException("Invalid character in string literal", chars.index);
+            }
+        }
+        if (!match("\"")) {
+            throw new ParseException("String literal must end with a double quote", chars.index);
+        }
+        return chars.emit(Token.Type.STRING);
     }
 
     public void lexEscape() {
-        throw new UnsupportedOperationException(); //TODO
+        if (!match("[bnrt'\"\\\\]")) {
+            throw new ParseException("Invalid escape sequence", chars.index);
+        }
     }
 
     public Token lexOperator() {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("[<>!=]") && match("=")) {
+            return chars.emit(Token.Type.OPERATOR);
+        } else if (match("&&") || match("\\|\\|")) {
+            return chars.emit(Token.Type.OPERATOR);
+        } else if (match(".")) {
+            return chars.emit(Token.Type.OPERATOR);
+        } else {
+            throw new ParseException("Invalid operator", chars.index);
+        }
     }
 
     /**
