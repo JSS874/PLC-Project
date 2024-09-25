@@ -1,7 +1,8 @@
 package plc.project;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * The lexer works through three main functions:
@@ -31,14 +32,15 @@ public final class Lexer {
     public List<Token> lex() {
         List<Token> tokens = new ArrayList<>();
         while (chars.has(0)) {
-            if (Character.isWhitespace(chars.get(0))) {
-                chars.advance();
+            if (match("[\\s&&[^\\b]]+")) {
+                chars.skip();
             } else {
                 tokens.add(lexToken());
             }
         }
         return tokens;
     }
+
 
     /**
      * This method determines the type of the next token, delegating to the
@@ -49,14 +51,12 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        if (match("[A-Za-z_]")) {
+        if (peek("[a-zA-Z_]")) {
             return lexIdentifier();
         } else if (peek("[+-]")) {
-            // Potential sign; check if it's followed by a digit
             if (chars.has(1) && String.valueOf(chars.get(1)).matches("[0-9]")) {
                 return lexNumber();
             } else {
-                // '+' or '-' by itself is an operator
                 return lexOperator();
             }
         } else if (peek("[0-9]")) {
@@ -71,18 +71,17 @@ public final class Lexer {
     }
 
     public Token lexIdentifier() {
-        if (!match("[a-zA-Z_]")) {
+        if (!peek("[a-zA-Z_]")) {
             throw new ParseException("Invalid identifier start", chars.index);
         }
-        while (chars.has(0) && match("[a-zA-Z0-9_-]*")) {
-            System.out.println("lexIdentifier Ran");
-            // No need to call advance here, match already advances the stream
+        while (chars.has(0) && peek("[a-zA-Z0-9_-]")) {
+            // Continue matching valid identifier characters
+            match("[a-zA-Z0-9_-]");
         }
         return chars.emit(Token.Type.IDENTIFIER);
     }
 
     public Token lexNumber() {
-        // Optional sign
         match("[+-]");
 
         boolean isZero = false;
@@ -91,24 +90,20 @@ public final class Lexer {
             isZero = true;
         } else if (match("[1-9]")) {
             while (match("[0-9]")) {
-                // Consume digits
             }
         } else {
             throw new ParseException("Invalid number format", chars.index);
         }
 
-        // Check for leading zeros
         if (isZero && peek("[0-9]")) {
             throw new ParseException("Leading zeros are not permitted in integers", chars.index);
         }
 
-        // Check for decimal point
         if (match("\\.")) {
             if (!match("[0-9]")) {
                 throw new ParseException("Decimal point must be followed by at least one digit", chars.index);
             }
             while (match("[0-9]")) {
-                // Consume digits after decimal point
             }
             return chars.emit(Token.Type.DECIMAL);
         } else {
@@ -121,7 +116,6 @@ public final class Lexer {
         if (match("\\\\")) {
             lexEscape();
         } else if (match("[^'\\\\\\n\\r]")) {
-            // Valid single character
         } else {
             throw new ParseException("Invalid character in character literal", chars.index);
         }
@@ -138,7 +132,6 @@ public final class Lexer {
             if (match("\\\\")) {
                 lexEscape();
             } else if (match("[^\"\n\r\\\\]")) {
-                // No need to call advance here, match already advances the stream
             } else {
                 throw new ParseException("Invalid character in string literal", chars.index);
             }
@@ -156,7 +149,6 @@ public final class Lexer {
     }
 
     public Token lexOperator() {
-        // Handle two-character operators
         System.out.println("RAN OPERATOR");
         if (peek("[<>!=]", "=")) {
             match("[<>!=]", "=");
@@ -200,6 +192,7 @@ public final class Lexer {
      * true. Hint - it's easiest to have this method simply call peek.
      */
     public boolean match(String... patterns) {
+        System.out.println("Match: " + Arrays.toString(patterns));
         boolean peek = peek(patterns);
         if (peek) {
             for (int i = 0; i < patterns.length; i++) {
