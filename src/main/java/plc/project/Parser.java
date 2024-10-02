@@ -359,7 +359,6 @@ public final class Parser {
     }
 
 
-
     /**
      * Parses the {@code additive-expression} rule.
      */
@@ -389,7 +388,7 @@ public final class Parser {
      */
     public Ast.Expression parseMultiplicativeExpression() throws ParseException {
         // First, parse the primary part of the expression, which is a secondary_expression.
-        Ast.Expression left = parsePrimaryExpression();
+        Ast.Expression left = parseSecondaryExpression();
 
         // Now, check for multiplicative operators ('*' or '/').
         while (peek("*") || peek("/")) {
@@ -398,7 +397,7 @@ public final class Parser {
             match(operator); // Match the operator token (either "*" or "/").
 
             // Parse the right-hand side (secondary expression).
-            Ast.Expression right = parsePrimaryExpression();
+            Ast.Expression right = parseSecondaryExpression();
 
             // Combine left and right expressions with the operator into a Binary expression.
             left = new Ast.Expression.Binary(operator, left, right);
@@ -482,10 +481,15 @@ public final class Parser {
             literal = literal.substring(1, literal.length() - 1); // Remove surrounding quotes
             return new Ast.Expression.Literal(literal.charAt(0));
         } else if (peek(Token.Type.STRING)) {
-            String literal = tokens.get(0).getLiteral();
+            String rawString = tokens.get(0).getLiteral();
+            String processedString = rawString.substring(1, rawString.length() - 1)
+                    .replace("\\n", "\n")
+                    .replace("\\t", "\t")
+                    .replace("\\\"", "\"")
+                    .replace("\\'", "'")
+                    .replace("\\\\", "\\");
             match(Token.Type.STRING);
-            literal = literal.substring(1, literal.length() - 1); // Remove surrounding quotes
-            return new Ast.Expression.Literal(literal);
+            return new Ast.Expression.Literal(processedString);
         }
 
         // Check if it's a group expression
