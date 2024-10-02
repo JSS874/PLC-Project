@@ -32,7 +32,7 @@ public final class Lexer {
     public List<Token> lex() {
         List<Token> tokens = new ArrayList<>();
         while (chars.has(0)) {
-            if (match("[\\s&&[^\\b]]+")) {
+            if (match("\\s")) {
                 chars.skip();
             } else {
                 tokens.add(lexToken());
