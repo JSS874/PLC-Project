@@ -490,7 +490,6 @@ public final class Parser {
 
         // Check if it's a group expression
         if (match("(")) {
-            // Parse the expression inside the parentheses
             Ast.Expression expression = parseExpression();
             if (!match(")")) {
                 throw new ParseException("Expected closing ')'", tokens.get(0).getIndex());
@@ -498,15 +497,24 @@ public final class Parser {
             return new Ast.Expression.Group(expression);
         }
 
-        // Check if it's an identifier (either variable or function call)
+        // Handle identifiers (either variable, function call, or field access)
         if (peek(Token.Type.IDENTIFIER)) {
-            String name = tokens.get(0).getLiteral();
+            Ast.Expression expression = new Ast.Expression.Access(Optional.empty(), tokens.get(0).getLiteral());
             match(Token.Type.IDENTIFIER);
+
+            // Now handle chained field accesses or method calls
+            while (match(".")) {
+                if (!peek(Token.Type.IDENTIFIER)) {
+                    throw new ParseException("Expected identifier after '.'", tokens.get(0).getIndex());
+                }
+                String name = tokens.get(0).getLiteral();
+                match(Token.Type.IDENTIFIER);
+                expression = new Ast.Expression.Access(Optional.of(expression), name);
+            }
 
             // Check if it's a function call
             if (match("(")) {
                 List<Ast.Expression> arguments = new ArrayList<>();
-                // Parse arguments if any
                 if (!peek(")")) {
                     arguments.add(parseExpression());
                     while (match(",")) {
@@ -516,16 +524,15 @@ public final class Parser {
                 if (!match(")")) {
                     throw new ParseException("Expected closing ')'", tokens.get(0).getIndex());
                 }
-                return new Ast.Expression.Function(Optional.empty(), name, arguments);
+                return new Ast.Expression.Function(Optional.of(expression), expression.toString(), arguments);
             }
 
-            // It's a variable access if not a function call
-            return new Ast.Expression.Access(Optional.empty(), name);
+            return expression;
         }
 
-        // If none of the above matched, throw a ParseException
         throw new ParseException("Invalid primary expression", tokens.get(0).getIndex());
     }
+
 
 
     /**
