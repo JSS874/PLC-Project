@@ -19,50 +19,6 @@ import java.util.stream.Stream;
  * or the LexerTests file from the last project part for more information.
  */
 final class ParserExpressionTests {
-    @Test
-    void testMissingOperand() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.INTEGER, "3", 0),
-                new Token(Token.Type.OPERATOR, "+", 1)
-                // Missing operand after the "+"
-        );
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
-            Parser parser = new Parser(tokens);
-            parser.parseExpression(); // Assuming "+" should be followed by another operand
-        }, "Expected IndexOutOfBoundsException due to missing operand after '+'.");
-    }
-    @Test
-    void testMissingClosingParenthesis() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.OPERATOR, "(", 0),
-                new Token(Token.Type.IDENTIFIER, "expr", 1)
-                // Missing closing parenthesis
-        );
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
-            Parser parser = new Parser(tokens);
-            parser.parseExpression(); // Attempting to parse an incomplete expression
-        }, "Expected IndexOutOfBoundsException due to missing closing parenthesis.");
-    }
-    @Test
-    void testInvalidInputParseException() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "f", 0)
-        );
-
-        Assertions.assertThrows(ParseException.class, () -> {
-            // Replace parseExpression or parseStatement with the relevant parsing method for your input.
-            Parser parser = new Parser(tokens);
-            parser.parseStatement(); // Assuming "f" is treated as a statement for this example.
-        }, "Expected a ParseException to be thrown");
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    void testExpressionStatement(String test, List<Token> tokens, Ast.Statement.Expression expected) {
-        test(tokens, expected, Parser::parseStatement);
-    }
     private static Stream<Arguments> testExpressionStatement() {
         return Stream.of(
                 Arguments.of("Function Expression",
@@ -76,13 +32,6 @@ final class ParserExpressionTests {
                         new Ast.Statement.Expression(new Ast.Expression.Function(Optional.empty(), "name", Arrays.asList()))
                 )
         );
-    }
-
-
-    @ParameterizedTest
-    @MethodSource
-    void testAssignmentStatement(String test, List<Token> tokens, Ast.Statement.Assignment expected) {
-        test(tokens, expected, Parser::parseStatement);
     }
 
     private static Stream<Arguments> testAssignmentStatement() {
@@ -101,12 +50,6 @@ final class ParserExpressionTests {
                         )
                 )
         );
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    void testLiteralExpression(String test, List<Token> tokens, Ast.Expression.Literal expected) {
-        test(tokens, expected, Parser::parseExpression);
     }
 
     private static Stream<Arguments> testLiteralExpression() {
@@ -138,12 +81,6 @@ final class ParserExpressionTests {
         );
     }
 
-    @ParameterizedTest
-    @MethodSource
-    void testGroupExpression(String test, List<Token> tokens, Ast.Expression.Group expected) {
-        test(tokens, expected, Parser::parseExpression);
-    }
-
     private static Stream<Arguments> testGroupExpression() {
         return Stream.of(
                 Arguments.of("Grouped Variable",
@@ -170,12 +107,6 @@ final class ParserExpressionTests {
                         ))
                 )
         );
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    void testBinaryExpression(String test, List<Token> tokens, Ast.Expression.Binary expected) {
-        test(tokens, expected, Parser::parseExpression);
     }
 
     private static Stream<Arguments> testBinaryExpression() {
@@ -231,12 +162,6 @@ final class ParserExpressionTests {
         );
     }
 
-    @ParameterizedTest
-    @MethodSource
-    void testAccessExpression(String test, List<Token> tokens, Ast.Expression.Access expected) {
-        test(tokens, expected, Parser::parseExpression);
-    }
-
     private static Stream<Arguments> testAccessExpression() {
         return Stream.of(
                 Arguments.of("Variable",
@@ -256,12 +181,6 @@ final class ParserExpressionTests {
                                 Ast.Expression.Access(Optional.empty(), "obj")), "field")
                 )
         );
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    void testFunctionExpression(String test, List<Token> tokens, Ast.Expression.Function expected) {
-        test(tokens, expected, Parser::parseExpression);
     }
 
     private static Stream<Arguments> testFunctionExpression() {
@@ -307,6 +226,89 @@ final class ParserExpressionTests {
         } else {
             Assertions.assertThrows(ParseException.class, () -> function.apply(parser));
         }
+    }
+
+    @Test
+    void testMissingOperand() {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.INTEGER, "3", 0),
+                new Token(Token.Type.OPERATOR, "+", 1)
+                // Missing operand after the "+"
+        );
+
+        Assertions.assertThrows(ParseException.class, () -> {
+            Parser parser = new Parser(tokens);
+            parser.parseExpression(); // Assuming "+" should be followed by another operand
+        }, "Expected ParseException due to missing operand after '+'.");
+    }
+
+    @Test
+    void testMissingClosingParenthesis() {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.OPERATOR, "(", 0),
+                new Token(Token.Type.IDENTIFIER, "expr", 1)
+                // Missing closing parenthesis
+        );
+
+        Assertions.assertThrows(ParseException.class, () -> {
+            Parser parser = new Parser(tokens);
+            parser.parseExpression(); // Attempting to parse an incomplete expression
+        }, "Expected ParseException due to missing closing parenthesis.");
+    }
+
+    @Test
+    void testInvalidInputParseException() {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "f", 0)
+        );
+
+        Assertions.assertThrows(ParseException.class, () -> {
+            // Replace parseExpression or parseStatement with the relevant parsing method for your input.
+            Parser parser = new Parser(tokens);
+            parser.parseStatement(); // Assuming "f" is treated as a statement for this example.
+        }, "Expected a ParseException to be thrown");
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testExpressionStatement(String test, List<Token> tokens, Ast.Statement.Expression expected) {
+        test(tokens, expected, Parser::parseStatement);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testAssignmentStatement(String test, List<Token> tokens, Ast.Statement.Assignment expected) {
+        test(tokens, expected, Parser::parseStatement);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testLiteralExpression(String test, List<Token> tokens, Ast.Expression.Literal expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testGroupExpression(String test, List<Token> tokens, Ast.Expression.Group expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testBinaryExpression(String test, List<Token> tokens, Ast.Expression.Binary expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testAccessExpression(String test, List<Token> tokens, Ast.Expression.Access expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testFunctionExpression(String test, List<Token> tokens, Ast.Expression.Function expected) {
+        test(tokens, expected, Parser::parseExpression);
     }
 
 }

@@ -134,7 +134,6 @@ public final class Parser {
      * statement, then it is an expression/assignment statement.
      */
     public Ast.Statement parseStatement() throws ParseException {
-
         if (peek("LET")) {
             return parseDeclarationStatement();
         }
@@ -603,6 +602,9 @@ public final class Parser {
          * Gets the token at index + offset.
          */
         public Token get(int offset) {
+            if (!has(offset)) {
+                throw new ParseException("Unexpected end of input", index + offset);
+            }
             return tokens.get(index + offset);
         }
 
