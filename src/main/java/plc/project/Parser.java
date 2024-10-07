@@ -160,10 +160,14 @@ public final class Parser {
         if (peek("=")) {
             match("=");
             Ast.Expression value = parseExpression();
-            match(";");
+            if (!match(";")) {
+                throw new ParseException("Expected ';' after assignment", tokens.get(0).getIndex());
+            }
             return new Ast.Statement.Assignment(expression, value);
         } else {
-            match(";");
+            if (!match(";")) {
+                throw new ParseException("Expected ';' after expression", tokens.get(0).getIndex());
+            }
             return new Ast.Statement.Expression(expression);
         }
     }
@@ -372,6 +376,10 @@ public final class Parser {
             String operator = tokens.get(0).getLiteral();
             match(operator); // Match the operator token.
 
+            if (!peek(Token.Type.INTEGER) && !peek(Token.Type.DECIMAL) && !peek(Token.Type.IDENTIFIER) && !peek("(")) {
+                throw new ParseException("Expected operand after operator", tokens.get(0).getIndex());
+            }
+
             // Parse the right-hand side, which is another multiplicative expression.
             Ast.Expression right = parseMultiplicativeExpression();
 
@@ -478,7 +486,7 @@ public final class Parser {
         } else if (peek(Token.Type.CHARACTER)) {
             String literal = tokens.get(0).getLiteral();
             match(Token.Type.CHARACTER);
-            literal = literal.substring(1, literal.length() - 1); // Remove surrounding quotes
+            literal = literal.substring(1, literal.length() - 1);
             return new Ast.Expression.Literal(literal.charAt(0));
         } else if (peek(Token.Type.STRING)) {
             String rawString = tokens.get(0).getLiteral();
