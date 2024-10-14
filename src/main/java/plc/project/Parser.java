@@ -201,7 +201,9 @@ public final class Parser {
             value = Optional.of(parseExpression());
         }
 
-        match(";");
+        if (!match(";")) {
+            throw new ParseException("Expected ';'", tokens.get(0).getIndex());
+        }
 
         return new Ast.Statement.Declaration(name, value);
     }
@@ -212,30 +214,24 @@ public final class Parser {
      * {@code IF}.
      */
     public Ast.Statement.If parseIfStatement() throws ParseException {
-
         match("IF");
-
         Ast.Expression condition = parseExpression();
-
+        if (!peek("DO")) {
+            throw new ParseException("Expected DO", tokens.get(-1).getIndex());
+        }
         match("DO");
-
         List<Ast.Statement> thenStatement = new ArrayList<>();
-
         while (!peek("ELSE") && !peek("END")) {
             thenStatement.add(parseStatement());
         }
-
         List<Ast.Statement> elseStatement = new ArrayList<>();
-
         if (peek("ELSE")) {
             match("ELSE");
             while (!peek("END")) {
                 elseStatement.add(parseStatement());
             }
         }
-
         match("END");
-
         return new Ast.Statement.If(condition, thenStatement, elseStatement);
     }
 
@@ -245,14 +241,20 @@ public final class Parser {
      * {@code FOR}.
      */
     public Ast.Statement.For parseForStatement() throws ParseException {
-
         match("FOR");
         match("(");
 
+        if (!peek(Token.Type.IDENTIFIER)) {
+            throw new ParseException("Expected an identifier for initializer", tokens.get(0).getIndex());
+        }
         String initializerName = tokens.get(0).getLiteral();
+        match(Token.Type.IDENTIFIER);
         match("=");
         Ast.Expression initializerValue = parseExpression();
-        Ast.Statement.Declaration initializer = new Ast.Statement.Declaration(initializerName, Optional.of(initializerValue));
+        Ast.Statement initializer = new Ast.Statement.Assignment(
+                new Ast.Expression.Access(Optional.empty(), initializerName),
+                initializerValue
+        );
 
         match(";");
 
@@ -260,10 +262,13 @@ public final class Parser {
 
         match(";");
 
+        if (!peek(Token.Type.IDENTIFIER)) {
+            throw new ParseException("Expected an identifier for increment", tokens.get(0).getIndex());
+        }
         Ast.Expression incrementReceiver = parseExpression();
         match("=");
         Ast.Expression incrementValue = parseExpression();
-        Ast.Statement.Assignment increment = new Ast.Statement.Assignment(incrementReceiver, incrementValue);
+        Ast.Statement increment = new Ast.Statement.Assignment(incrementReceiver, incrementValue);
 
         match(")");
 
@@ -509,10 +514,9 @@ public final class Parser {
 
         // Check if it's a group expression
         if (match("(")) {
-            // Parse the expression inside the parentheses
             Ast.Expression expression = parseExpression();
             if (!match(")")) {
-                throw new ParseException("Expected closing ')'", tokens.get(0).getIndex());
+                throw new ParseException("Expected closing ')'", tokens.get(-1).getIndex());
             }
             return new Ast.Expression.Group(expression);
         }
