@@ -84,6 +84,7 @@ public final class Parser {
      * next tokens start a method, aka {@code DEF}.
      */
     public Ast.Method parseMethod() throws ParseException {
+        System.out.println("Current Token: " + tokens.get(0).getLiteral());
 
         match("DEF");
 
@@ -100,23 +101,28 @@ public final class Parser {
         match("(");
         List<String> parameters = new ArrayList<>();
 
-        if (peek(Token.Type.INTEGER)) {
+        if (peek(Token.Type.IDENTIFIER)) {
             parameters.add(tokens.get(0).getLiteral());
-            match(Token.Type.INTEGER);
+            match(Token.Type.IDENTIFIER);
 
             while (peek(",")) {
                 match(",");
-                if (!peek(Token.Type.INTEGER)) {
+                if (!peek(Token.Type.IDENTIFIER)) {
                     throw new ParseException("Expected an integer", tokens.get(0).getIndex());
                 }
                 parameters.add(tokens.get(0).getLiteral());
-                match(Token.Type.INTEGER);
+                match(Token.Type.IDENTIFIER);
             }
         }
 
         match(")");
 
-        match("DO)");
+        if (!peek("DO")) {
+            throw new ParseException("Expected DO", tokens.get(0).getIndex());
+        }
+
+        match("DO");
+
         List<Ast.Statement> statements = new ArrayList<>();
 
         while (!peek("END")) {
@@ -134,6 +140,8 @@ public final class Parser {
      * statement, then it is an expression/assignment statement.
      */
     public Ast.Statement parseStatement() throws ParseException {
+        System.out.println("Current Token: " + tokens.get(0).getLiteral());
+
         if (peek("LET")) {
             return parseDeclarationStatement();
         }
@@ -159,12 +167,12 @@ public final class Parser {
         if (peek("=")) {
             match("=");
             Ast.Expression value = parseExpression();
-            if (!match(";")) {
+            if (!peek(";") || !match(";")) {
                 throw new ParseException("Expected ';' after assignment", tokens.get(0).getIndex());
             }
             return new Ast.Statement.Assignment(expression, value);
         } else {
-            if (!match(";")) {
+            if (!peek(";") || !match(";")) {
                 throw new ParseException("Expected ';' after expression", tokens.get(0).getIndex());
             }
             return new Ast.Statement.Expression(expression);
