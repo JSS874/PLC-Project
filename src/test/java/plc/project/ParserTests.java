@@ -457,6 +457,36 @@ final class ParserTests {
         );
     }
 
+    private static Stream<Arguments> testMethodField() {
+        return Stream.of(
+                Arguments.of("Method Field",
+                        Arrays.asList(
+                                // DEF name() DO stmt; END\nLET name = expr;
+                                new Token(Token.Type.IDENTIFIER, "DEF", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, "(", 8),
+                                new Token(Token.Type.OPERATOR, ")", 9),
+                                new Token(Token.Type.IDENTIFIER, "DO", 11),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 14),
+                                new Token(Token.Type.OPERATOR, ";", 18),
+                                new Token(Token.Type.IDENTIFIER, "END", 20),
+                                new Token(Token.Type.OPERATOR, "\n", 23),
+                                new Token(Token.Type.IDENTIFIER, "LET", 24),
+                                new Token(Token.Type.IDENTIFIER, "name", 28),
+                                new Token(Token.Type.OPERATOR, "=", 33),
+                                new Token(Token.Type.IDENTIFIER, "expr", 35),
+                                new Token(Token.Type.OPERATOR, ";", 39)
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(new Ast.Field("name", false, Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))),
+                                Arrays.asList(new Ast.Method("name", Arrays.asList(), Arrays.asList(
+                                        new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt"))
+                                )))
+                        )
+                )
+        );
+    }
+
     /**
      * Standard test function. If expected is null, a ParseException is expected
      * to be thrown (not used in the provided tests).
@@ -473,6 +503,12 @@ final class ParserTests {
     @ParameterizedTest
     @MethodSource
     void testSource(String test, List<Token> tokens, Ast.Source expected) {
+        test(tokens, expected, Parser::parseSource);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testMethodField(String test, List<Token> tokens, Ast.Source expected) {
         test(tokens, expected, Parser::parseSource);
     }
 

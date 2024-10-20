@@ -217,7 +217,7 @@ public final class Parser {
         match("IF");
         Ast.Expression condition = parseExpression();
         if (!peek("DO")) {
-            throw new ParseException("Expected DO", tokens.get(-1).getIndex());
+            throw new ParseException("Expected DO", tokens.get(0).getIndex());
         }
         match("DO");
         List<Ast.Statement> thenStatement = new ArrayList<>();
@@ -516,7 +516,7 @@ public final class Parser {
         if (match("(")) {
             Ast.Expression expression = parseExpression();
             if (!match(")")) {
-                throw new ParseException("Expected closing ')'", tokens.get(-1).getIndex());
+                throw new ParseException("Expected closing ')'", tokens.get(0).getIndex());
             }
             return new Ast.Expression.Group(expression);
         }
